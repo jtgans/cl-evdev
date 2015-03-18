@@ -1,0 +1,14 @@
+* cl-evdev: a Linux /dev/input driver for CL
+
+=cl-evdev= is meant to be a drop-dead simple driver for teasing out events from
+Linux's /dev/input drivers. It was originally designed for the Navi project, as
+part of the silica keyboard handling routines.
+
+Note: this code is by no means complete, and is less than alpha quality code.
+I've tested it on SBCL and Ubuntu Linux 3.x as well as the embedded Linux kernel
+built for Intel Edison boards, but nothing else.
+
+** Usage
+
+Use your typical ASDF system definition package, be it the old, deprecated ASDF,
+or quicklisp.
