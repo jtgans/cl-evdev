@@ -1,10 +1,11 @@
 ;;;; evdev.asd
 
-(asdf:defsystem #:evdev
+(asdf:defsystem #:cl-evdev
     :description "Linux keyboard event input driver."
     :author "June Tate-Gans <june@theonelab.com>"
-    :license "Apache"
+    :license "Simplified BSD License"
     :serial t
-    :depends (:binary-types :alexandria)
+    :depends-on (#:binary-types
+                 #:alexandria)
     :components ((:file "package")
                  (:file "evdev")))
