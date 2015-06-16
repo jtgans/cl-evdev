@@ -6,6 +6,8 @@
     :license "Simplified BSD License"
     :serial t
     :depends-on (#:binary-types
-                 #:alexandria)
+                 #:alexandria
+                 #:local-time
+                 #:cl-event-handler)
     :components ((:file "package")
                  (:file "evdev")))
