@@ -13,6 +13,7 @@
     (#x15 . :ev-ff)
     (#x16 . :ev-pwr)
     (#x17 . :ev-ff-status))
+  :test #'equal
   :documentation "The type of an input event stored in the type field of the
 Linux input_event struct in linux/include/uapi/linux/input.h. Not expected to be
 used outside of this package.")
@@ -21,6 +22,7 @@ used outside of this package.")
   '((0 . :released)
     (1 . :pressed)
     (2 . :repeat))
+  :test #'equal
   :documentation "Keyboard input key states as stored in the value field of the
 Linux input_event struct in linux/include/uapi/linux/input.h. Not expected to be
 used outside of this package.")
@@ -138,6 +140,7 @@ used outside of this package.")
       (117 . (:name kpequal          :glyph #\=))
       (118 . (:name kpplusminus      :glyph nil))
       (119 . (:name pause            :glyph nil)))
+  :test #'equal
   :documentation "List of key code to key symbol name and printable character.
 Used to decode the code field of the Linux input_event struct defined in
 linux/include/uapi/linux/input.h.")
