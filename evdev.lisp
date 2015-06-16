@@ -189,7 +189,7 @@ from raw evdev data."))
 (defmethod print-object ((object keyboard-event) stream)
   (print-unreadable-object (object stream :type t)
     (with-slots (name glyph) object
-      (format stream ":NAME ~a :GLYPH ~a" name glyph))))
+      (format stream ":NAME ~a :GLYPH ~a :STATE ~a" name glyph state))))
 
 (defclass misc-event (input-event)
   ()
@@ -220,12 +220,12 @@ from raw evdev data."))
                (let* ((key-code (rest (assoc code +input-key-codes+)))
                       (name (getf key-code :name))
                       (glyph (getf key-code :glyph))
-                      (state ()))
+                      (state (rest (assoc value +input-key-states+))))
                  (make-instance 'keyboard-event
                                 :timestamp timestamp
                                 :name name
                                 :glyph glyph
-                                :state )))
+                                :state state)))
               ((eq event-type :ev-msc)
                (make-instance 'misc-event
                               :timestamp timestamp))
