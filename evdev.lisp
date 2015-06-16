@@ -1,4 +1,4 @@
-(in-package :evdev)
+(in-package :cl-evdev)
 
 (define-constant +input-event-types+
   '((#x00 . :ev-syn)
@@ -146,31 +146,84 @@ linux/include/uapi/linux/input.h.")
 (define-unsigned unsigned-short 2)
 (define-unsigned unsigned-int 4)
 
-(define-binary-class input-event ()
+(define-binary-class input-event-struct ()
   ((tv_sec  :binary-type long-int)
    (tv_usec :binary-type long-int)
    (type    :binary-type unsigned-short)
    (code    :binary-type unsigned-short)
-   (value   :binary-type unsigned-int)))
+   (value   :binary-type unsigned-int))
+  (:documentation "This is a verbaticm copy of the input_event struct defined in
+linux/include/uapi/linux/input.h. This is used to read in each event straight
+from raw evdev data."))
+
+(defclass input-event (event)
+  ((timestamp :initarg :timestamp
+              :type duration))
+  (:documentation "The base class for evdev input events."))
+
+(defmethod print-object ((object input-event) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (timestamp) object
+      (format stream ":TIMESTAMP ~a"
+              timestamp))))
+
+(defclass keyboard-event (input-event)
+  ((state :initarg :state
+          :type (or :released :pressed :repeat)
+          :documentation
+          "The state of the key for this event. One of :RELEASED, :PRESSED, or
+:REPEAT.")
+   (name :initarg :name
+         :type symbol
+         :documentation
+         "The human-readable name for the key. Every key event has one.")
+   (glyph :initarg :glyph
+          :type symbol
+          :documentation
+          "The character code point for this key. May be NIL."))
+  (:documentation "An INPUT-EVENT that contains keyboard-specific state data."))
+
+(defmethod print-object ((object keyboard-event) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (name glyph) object
+      (format stream ":NAME ~a :GLYPH ~a" name glyph))))
+
+(defclass misc-event (input-event)
+  ()
+  (:documentation "Represents a miscellaneous evdev event."))
+
+(defun read-raw-event (stream)
+  "Reads in a single INPUT-EVENT-STRUcT from STREAM."
+  (let ((*endian* :little-endian))
+    (read-binary 'input-event-struct stream)))
+
+(defun raw-event-struct-type (struct)
+  "Returns a symbol denoting the event type for the given STRUcT."
+  (with-slots (type) struct
+    (rest (assoc type +input-event-types+))))
+
+(defun usecs-to-nsecs (usecs)
+  "converts evdev tv_usec microseconds to nanoseconds."
+  (* usecs 1000))
 
 (defun read-event (stream)
-  (let ((event (read-binary 'input-event stream)))
-    (format t "~{~S~}" event)))
-
-(defun input-event-loop (device-path)
-  (with-binary-file (stream device-path :direction :input)
-    (unwind-protect
-         (let ((*endian* :little-endian))
-           (loop
-              (let ((input-event (read-binary 'input-event stream)))
-                (unless input-event (return))
-                (with-slots (tv_sec tv_usec type code value) input-event
-                  (when (and (eq (rest (assoc type +input-event-types+))
-                                 :ev-key)
-                             (eq value 1))
-                    (format t "time: ~S.~S type: ~S code: ~S value: ~S~%"
-                            tv_sec tv_usec
-                            (assoc type +input-event-types+)
-                            (assoc code +input-key-codes+)
-                            value)
-                    (finish-output)))))))))
+  "Reads an event from the evdev data STREAM and returns an instance of INPUT-EVENT."
+  (let* ((*endian* :little-endian)
+         (event (read-raw-event stream)))
+    (with-slots (tv_sec tv_usec type code value) event
+      (let ((event-type (raw-event-struct-type event))
+            (timestamp (unix-to-timestamp tv_sec :nsec (usecs-to-nsecs tv_usec))))
+        (cond ((eq event-type :ev-key)
+               (let* ((key-code (rest (assoc code +input-key-codes+)))
+                      (name (getf key-code :name))
+                      (glyph (getf key-code :glyph))
+                      (state ()))
+                 (make-instance 'keyboard-event
+                                :timestamp timestamp
+                                :name name
+                                :glyph glyph
+                                :state )))
+              ((eq event-type :ev-msc)
+               (make-instance 'misc-event
+                              :timestamp timestamp))
+              (t (warn "Unknown evdev event type ~S" event-type) nil))))))
