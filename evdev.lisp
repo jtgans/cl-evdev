@@ -230,3 +230,8 @@ from raw evdev data."))
                (make-instance 'misc-event
                               :timestamp timestamp))
               (t (warn "Unknown evdev event type ~S" event-type) nil))))))
+
+(export '(input-event
+          keyboard-event
+          misc-event
+          read-event))
