@@ -18,6 +18,21 @@
 Linux input_event struct in linux/include/uapi/linux/input.h. Not expected to be
 used outside of this package.")
 
+(define-constant +input-syn-codes+
+    '((0 . :syn-report)
+      (1 . :syn-config)
+      (2 . :syn-mt-report)
+      (3 . :syn-dropped))
+  :test #'equal
+  :documentation "The code of a Linux EV_SYN event type.
+
+SYN_REPORT is used to synchronize events between the kernel and this driver.
+They don't actually contain anything useful other than that.
+
+SYN_DROPPED indicates we've dropped input events because we weren't reading fast
+enough, and that we should skip events until the next SYN_REPORT type, and query
+via an ioctl to get the current state.")
+
 (define-constant +input-key-states+
   '((0 . :released)
     (1 . :pressed)
@@ -145,13 +160,13 @@ used outside of this package.")
 Used to decode the code field of the Linux input_event struct defined in
 linux/include/uapi/linux/input.h.")
 
-(define-unsigned long-int 4)
+(define-unsigned unsigned-long-int 8)
 (define-unsigned unsigned-short 2)
 (define-unsigned unsigned-int 4)
 
 (define-binary-class input-event-struct ()
-  ((tv_sec  :binary-type long-int)
-   (tv_usec :binary-type long-int)
+  ((tv_sec  :binary-type unsigned-long-int)
+   (tv_usec :binary-type unsigned-long-int)
    (type    :binary-type unsigned-short)
    (code    :binary-type unsigned-short)
    (value   :binary-type unsigned-int))
@@ -163,6 +178,13 @@ from raw evdev data."))
   ((timestamp :initarg :timestamp
               :type duration))
   (:documentation "The base class for evdev input events."))
+
+(defmethod print-object ((object input-event-struct) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (tv_sec tv_usec type code value) object
+      (let ((type (cdr (assoc type +input-event-types+))))
+        (format stream ":TV_SEC ~a :TV_USEC ~a :TYPE ~a :CODE ~a :VALUE ~a"
+                tv_sec tv_usec type code value)))))
 
 (defmethod print-object ((object input-event) stream)
   (print-unreadable-object (object stream :type t)
@@ -177,10 +199,12 @@ from raw evdev data."))
           "The state of the key for this event. One of :RELEASED, :PRESSED, or
 :REPEAT.")
    (name :initarg :name
+         :accessor :name
          :type symbol
          :documentation
          "The human-readable name for the key. Every key event has one.")
    (glyph :initarg :glyph
+          :accessor :glyph
           :type symbol
           :documentation
           "The character code point for this key. May be NIL."))
@@ -191,12 +215,25 @@ from raw evdev data."))
     (with-slots (name glyph state) object
       (format stream ":NAME ~a :GLYPH ~a :STATE ~a" name glyph state))))
 
+(defclass sync-event (input-event)
+  ((dropped-events :initarg :dropped-events
+                   :type boolean
+                   :documentation
+                   "Whether or not events have been dropped between this event
+and the next SYNC-EVENT."))
+  (:documentation "An INPUT-EVENT that contains synchronization state data."))
+
+(defmethod print-object ((object sync-event) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (dropped-events) object
+      (format stream ":DROPPED-EVENTS ~a" dropped-events))))
+
 (defclass misc-event (input-event)
   ()
   (:documentation "Represents a miscellaneous evdev event."))
 
 (defun read-raw-event (stream)
-  "Reads in a single INPUT-EVENT-STRUcT from STREAM."
+  "Reads in a single INPUT-EVENT-STRUCT from STREAM."
   (let ((*endian* :little-endian))
     (read-binary 'input-event-struct stream)))
 
@@ -229,9 +266,29 @@ from raw evdev data."))
               ((eq event-type :ev-msc)
                (make-instance 'misc-event
                               :timestamp timestamp))
+              ((eq event-type :ev-syn)
+               (let ((syn-code (rest (assoc code +input-syn-codes+))))
+                 (make-instance 'sync-event
+                                :timestamp timestamp
+                                :dropped-events (eq syn-code :syn-dropped))))
               (t (warn "Unknown evdev event type ~S" event-type) nil))))))
+
+(defmacro with-evdev-device ((event-var device-path)
+                             &body body)
+  "Opens DEVICE-PATH for reading, reads in individual events into EVENT-VAR and
+calls BODY for each event passed in. DEVICE-PATH must exist, otherwise an error
+condition is signaled."
+  `(with-open-file (stream ,device-path
+                           :element-type '(unsigned-byte 8)
+                           :direction :io
+                           :if-does-not-exist :error
+                           :if-exists :append)
+     (loop for ,event-var = (read-event stream)
+        while ,event-var do
+          (unwind-protect ,@body))))
 
 (export '(input-event
           keyboard-event
           misc-event
-          read-event))
+          read-event
+          with-evdev-device))
