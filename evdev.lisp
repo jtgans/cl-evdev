@@ -204,7 +204,7 @@ from raw evdev data. Unix time values bit widths differ on 32/64bit systems."))
 (defmethod print-object ((object input-event-struct) stream)
   (print-unreadable-object (object stream :type t)
     (with-slots (tv_sec tv_usec type code value) object
-      (let ((typee (cdr (assoc type +input-event-types+))))
+      (let ((type (cdr (assoc type +input-event-types+))))
         (format stream ":TV_SEC ~a :TV_USEC ~a :TYPE ~a :CODE ~a :VALUE ~a"
                 tv_sec tv_usec type code value)))))
 
@@ -232,7 +232,7 @@ from raw evdev data. Unix time values bit widths differ on 32/64bit systems."))
           "The character code point for this key. May be NIL."))
   (:documentation "An INPUT-EVENT that contains keyboard-specific state data."))
 
-(defmethod print-object ((object keyboard-event) stream)  
+(defmethod print-object ((object keyboard-event) stream)
   (print-unreadable-object (object stream :type t)
     (with-slots (name glyph state) object
       (format stream ":NAME ~a :GLYPH ~a :STATE ~a" name glyph state))))
@@ -319,7 +319,7 @@ and the next SYNC-EVENT."))
 				:value value)))
               ((eq event-type :ev-msc)
                (make-instance 'misc-event
-                              :timestamp nil))
+                              :timestamp timestamp))
 	      ((eq event-type :ev-rel)
 	       (let* ((abs-code (rest (assoc code +input-rel-codes+)))
                       (type (getf abs-code :type)))
@@ -331,8 +331,8 @@ and the next SYNC-EVENT."))
                (let ((syn-code (rest (assoc code +input-syn-codes+))))
                  (make-instance 'sync-event
                                 :timestamp timestamp
-                                :dropped-events (eq syn-code :syn-dropped))))	      
-	       (t (warn "Unknown evdev event type ~S" event-type) nil))))))
+                                :dropped-events (eq syn-code :syn-dropped))))
+	      (t (warn "Unknown evdev event type ~S" event-type) nil))))))
 
 (defmacro with-evdev-device ((event-var device-path)
                              &body body)
