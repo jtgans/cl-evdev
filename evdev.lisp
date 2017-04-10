@@ -194,7 +194,8 @@ linux/include/uapi/linux/input.h.")
    (value   :binary-type unsigned-int)) 
   (:documentation "This is a verbaticm copy of the input_event struct defined in
 linux/include/uapi/linux/input.h. This is used to read in each event straight
-from raw evdev data. Unix time values bit widths differ on 32/64bit systems."))
+from raw evdev data. Unix time values bit widths differ on 32/64bit systems and
+based on the return value of (machine-type) in SBCL."))
 
 (defclass input-event (event)
   ((timestamp :initarg :timestamp
