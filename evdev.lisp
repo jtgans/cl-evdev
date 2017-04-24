@@ -350,9 +350,3 @@ condition is signaled."
          for ,event-var = (read-event ,stream)
          while ,event-var
          do (progn ,@body)))))
-
-(export '(input-event
-          keyboard-event
-          misc-event
-          read-event
-          with-evdev-device))
