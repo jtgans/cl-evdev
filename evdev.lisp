@@ -340,14 +340,16 @@ and the next SYNC-EVENT."))
   "Opens DEVICE-PATH for reading, reads in individual events into EVENT-VAR and
 calls BODY for each event passed in. DEVICE-PATH must exist, otherwise an error
 condition is signaled."
-  `(with-open-file (stream ,device-path
-                           :element-type '(unsigned-byte 8)
-                           :direction :io
-                           :if-does-not-exist :error
-                           :if-exists :append)
-     (loop for ,event-var = (read-event stream)
-        while ,event-var do
-          (unwind-protect ,@body))))
+  (let ((stream (gensym)))
+    `(with-open-file (,stream ,device-path
+                              :element-type '(unsigned-byte 8)
+                              :direction :io
+                              :if-does-not-exist :error
+                              :if-exists :append)
+       (loop
+         for ,event-var = (read-event ,stream)
+         while ,event-var
+         do (progn ,@body)))))
 
 (export '(input-event
           keyboard-event
