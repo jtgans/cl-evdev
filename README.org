@@ -10,5 +10,5 @@ built for Intel Edison boards, but nothing else.
 
 ** Usage
 
-Use your typical ASDF system definition package, be it the old, deprecated ASDF,
-or quicklisp.
+Use your typical ASDF system definition package, be it directly via ASDF, or via
+Quicklisp.
