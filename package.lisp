@@ -2,4 +2,18 @@
 
 (defpackage #:cl-evdev
   (:use #:cl #:binary-types #:alexandria #:local-time #:cl-event-handler)
-  (:documentation "Linux keyboard event input driver."))
+  (:documentation "Linux keyboard event input driver.")
+  (:export #:with-evdev-device
+
+           #:input-event
+           #:keyboard-event
+           #:misc-event
+           #:read-event
+
+           #:timestamp
+           #:state
+           #:name
+           #:glyph
+           #:dropped-events
+           #:value
+           #:type))
