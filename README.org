@@ -12,3 +12,7 @@ built for Intel Edison boards, but nothing else.
 
 Use your typical ASDF system definition package, be it directly via ASDF, or via
 Quicklisp.
+
+# Tested Devices
+* Lenovo Black Silk Keyboard
+* Wacom CTE-440 Tablet
