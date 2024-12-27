@@ -168,17 +168,13 @@ linux/include/uapi/linux/input.h.")
    (24 . (:name ABS_PRESSURE))
    (40 . (:name ABS_MISC)))
   :test #'equal
-  :documentation "Absolute device values for pointer and tablet hardware."
-)
+  :documentation "Absolute device values for pointer and tablet hardware.")
 
 (define-constant +input-rel-codes+
  '((8 . (:name REL_WHEEL)))
   :test #'equal
-  :documentation "Relative motion types."
-)
+  :documentation "Relative motion types.")
 
-
-(cond ((equal (machine-type) "X86")
        (define-unsigned unsigned-long-int 4))
       ((equal (machine-type) "X86-64")
        (define-unsigned unsigned-long-int 8))
