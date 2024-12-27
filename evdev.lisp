@@ -223,12 +223,10 @@ based on the return value of (machine-type) in SBCL."))
 :REPEAT.")
    (name :initarg :name
          :accessor :name
-         :type symbol
          :documentation
          "The human-readable name for the key. Every key event has one.")
    (glyph :initarg :glyph
           :accessor :glyph
-          :type symbol
           :documentation
           "The character code point for this key. May be NIL."))
   (:documentation "An INPUT-EVENT that contains keyboard-specific state data."))
