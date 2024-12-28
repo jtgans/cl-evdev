@@ -168,21 +168,19 @@ linux/include/uapi/linux/input.h.")
    (24 . (:name ABS_PRESSURE))
    (40 . (:name ABS_MISC)))
   :test #'equal
-  :documentation "Absolute device values for pointer and tablet hardware."
-)
+  :documentation "Absolute device values for pointer and tablet hardware.")
 
 (define-constant +input-rel-codes+
  '((8 . (:name REL_WHEEL)))
   :test #'equal
-  :documentation "Relative motion types."
-)
+  :documentation "Relative motion types.")
 
-
-(cond ((equal (machine-type) "X86")
+(cond ((member (machine-type) '("X86" "armv7l") :test #'equal)
        (define-unsigned unsigned-long-int 4))
-      ((equal (machine-type) "X86-64")
+      ((member (machine-type) '("X86-64" "x86_64") :test #'equal)
        (define-unsigned unsigned-long-int 8))
       (t 4))
+
 (define-unsigned unsigned-short 2)
 (define-unsigned unsigned-int 4)
 
@@ -223,12 +221,10 @@ based on the return value of (machine-type) in SBCL."))
 :REPEAT.")
    (name :initarg :name
          :accessor :name
-         :type symbol
          :documentation
          "The human-readable name for the key. Every key event has one.")
    (glyph :initarg :glyph
           :accessor :glyph
-          :type symbol
           :documentation
           "The character code point for this key. May be NIL."))
   (:documentation "An INPUT-EVENT that contains keyboard-specific state data."))
