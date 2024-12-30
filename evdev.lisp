@@ -346,3 +346,24 @@ condition is signaled."
          for ,event-var = (read-event ,stream)
          while ,event-var
          do (progn ,@body)))))
+
+(defmacro with-evdev-devices ((event-var &rest device-paths)
+                             &body body)
+  "Opens DEVICE-PATHS for reading, combine individual stream events into
+EVENT-VAR and calls BODY for each event passed in. DEVICE-PATHS must
+exist, otherwise an error condition is signaled."
+  (let ((concatenated (gensym))
+	(inputs (gensym)))
+    `(let* ((,inputs (loop for device-path in ',device-paths
+			   collecting (open device-path
+					    :element-type '(unsigned-byte 8)
+					    :direction :input
+					    :if-does-not-exist :error)))
+	    (,concatenated (apply #'make-concatenated-stream ,inputs)))
+       (unwind-protect
+	    (loop
+              for ,event-var = (read-event ,concatenated)
+              while ,event-var
+              do (progn ,@body))
+	 (dolist (s (concatenated-stream-streams ,concatenated))
+	   (close s))))))
