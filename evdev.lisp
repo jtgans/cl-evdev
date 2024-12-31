@@ -175,11 +175,8 @@ linux/include/uapi/linux/input.h.")
   :test #'equal
   :documentation "Relative motion types.")
 
-(cond ((member (machine-type) '("X86" "armv7l") :test #'equal)
-       (define-unsigned unsigned-long-int 4))
-      ((member (machine-type) '("X86-64" "x86_64") :test #'equal)
-       (define-unsigned unsigned-long-int 8))
-      (t 4))
+#+32-bit(define-unsigned unsigned-long-int 4)
+#+64-bit(define-unsigned unsigned-long-int 8)
 
 (define-unsigned unsigned-short 2)
 (define-unsigned unsigned-int 4)

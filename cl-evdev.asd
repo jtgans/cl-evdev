@@ -8,6 +8,7 @@
     :depends-on (#:binary-types
                  #:alexandria
                  #:local-time
+		 #:trivial-features
                  #:cl-event-handler)
     :components ((:file "package")
                  (:file "evdev")))
