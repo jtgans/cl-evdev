@@ -175,11 +175,8 @@ linux/include/uapi/linux/input.h.")
   :test #'equal
   :documentation "Relative motion types.")
 
-(cond ((member (machine-type) '("X86" "armv7l") :test #'equal)
-       (define-unsigned unsigned-long-int 4))
-      ((member (machine-type) '("X86-64" "x86_64") :test #'equal)
-       (define-unsigned unsigned-long-int 8))
-      (t 4))
+#+32-bit(define-unsigned unsigned-long-int 4)
+#+64-bit(define-unsigned unsigned-long-int 8)
 
 (define-unsigned unsigned-short 2)
 (define-unsigned unsigned-int 4)
@@ -346,3 +343,24 @@ condition is signaled."
          for ,event-var = (read-event ,stream)
          while ,event-var
          do (progn ,@body)))))
+
+(defmacro with-evdev-devices ((event-var &rest device-paths)
+                             &body body)
+  "Opens DEVICE-PATHS for reading, combine individual stream events into
+EVENT-VAR and calls BODY for each event passed in. DEVICE-PATHS must
+exist, otherwise an error condition is signaled."
+  (let ((concatenated (gensym))
+	(inputs (gensym)))
+    `(let* ((,inputs (loop for device-path in ',device-paths
+			   collecting (open device-path
+					    :element-type '(unsigned-byte 8)
+					    :direction :input
+					    :if-does-not-exist :error)))
+	    (,concatenated (apply #'make-concatenated-stream ,inputs)))
+       (unwind-protect
+	    (loop
+              for ,event-var = (read-event ,concatenated)
+              while ,event-var
+              do (progn ,@body))
+	 (dolist (s (concatenated-stream-streams ,concatenated))
+	   (close s))))))
